@@ -1,0 +1,143 @@
+#!/bin/usr/py
+
+import httplib2
+import json
+
+h= httplib2.Http(".cache")
+h.add_credentials('admin','admin')
+
+def flow_display(controllerip,flowname1,nodeid,nodetype):
+	URL1= "http://"+controllerip+":8080/controller/nb/v2/flowprogrammer/default/node/"+nodetype+"/"+nodeid+"/staticFlow/"+flowname1
+	resp,content= h.request(URL1,"GET")
+	fdata= json.loads(content)
+	print "Flow name:", fdata['name']
+	print "Node Id", fdata['node']['id']
+	print "Node Type", fdata['node']['type']
+	print "Ingress Port:", fdata['ingressPort']
+	print "Priority:", fdata['priority']
+	print "Ethernet type:", fdata['etherType']
+	#print "Source Network:", fdata['nwSrc']
+	noofactions= len(fdata['actions'])
+	for actionno in range(0,noofactions):
+		print " Action No: ", actionno, " Action :", fdata['actions'][actionno]
+	print "\n"
+	return
+
+	
+def flow_put(controllerip):
+	
+	fdata= {"installInHw":"false"}
+	
+	flow_name= raw_input("Enter Flow name:")
+	node_id= raw_input("Enter node id:")
+	node_type= raw_input("Enter node type:")
+	ingress_port= raw_input("Enter ingress port:")
+	flow_priority= raw_input("Enter the flow priority:")
+	flow_ethertype= raw_input("Enter the ethernet type:")
+	action1= raw_input("Enter the output port:")
+	#fdata['nwSrc']= raw_input("Enter the source network:")
+	#fdata['actions']= []
+	#flow_actions= raw_input("Enter the output port:")
+	fdata.update({"name":flow_name})
+	fdata.update({"node":{"id":node_id,"type":node_type}})
+	fdata.update({"ingressPort":ingress_port})
+	fdata.update({"etherType":flow_ethertype})
+	fdata.update({"priority":flow_priority})
+	
+	fdata.update({"actions":["OUTPUT="+action1]})
+	
+	
+	URL1= "http://" + \
+     	controllerip + \
+		  ":8080/controller/nb/v2/flowprogrammer/default/node/" + \
+	      node_type + \
+		  "/"+ \
+		  node_id + \
+		  "/staticFlow/" + \
+		  fdata['name']
+	print json.dumps(fdata)
+	resp,content= h.request(uri=URL1,method='PUT',headers={'Content-Type':'application/json'},body=json.dumps(fdata))
+	#print URL1
+	
+	#print resp
+	#print content
+	print "Flow added"
+	return
+
+
+def flow_delete(controllerip,flowname1,nodeid,nodetype):
+	URL1= "http://"+controllerip+":8080/controller/nb/v2/flowprogrammer/default/node/"+nodetype+"/"+nodeid+"/staticFlow/"+flowname1
+	resp,content= h.request(URL1,"DELETE")
+	return
+
+def flow_toggle(controllerip,flowname1,nodeid,nodetype):
+	URL1= "http://"+controllerip+":8080/controller/nb/v2/flowprogrammer/default/node/"+nodetype+"/"+nodeid+"/staticFlow/"+flowname1
+	resp,content= h.request(URL1,"POST")
+	return
+
+def node_flow_list(controllerip,nodeid,nodetype):
+	URL1= "http://"+controllerip+":8080/controller/nb/v2/flowprogrammer/default/node/"+nodetype+"/"+nodeid
+	resp,content= h.request(URL1,"GET")
+	nodeflowlist=json.loads(content)
+	nflist= nodeflowlist['flowConfig']
+	noofflows= len(nflist)
+	for flowno in range(0,noofflows):
+		flow_display(controllerip,nflist[flowno]['name'],nodeid,nodetype)
+	return
+
+def flow_list(controllerip):
+	URL1= "http://"+controllerip+":8080/controller/nb/v2/flowprogrammer/default"
+	resp,content= h.request(URL1,"GET")
+	nodeflowlist=json.loads(content)
+	nflist= nodeflowlist['flowConfig']
+	noofflows= len(nflist)
+	for flowno in range(0,noofflows):
+		node_flow_list(controllerip,nflist[flowno]['node']['id'],nflist[flowno]['node']['type'])
+	return
+	
+controlip = raw_input("Enter the Controller IP Address:")
+#controlip= "127.0.0.1"
+while 1: 
+
+	print "Flow programming options:"
+
+
+	print "\n"
+	print "1. Display a list of all flows in the network"
+	print "2. Display a list of flows on a particular flow in the network"
+	print "3. Display a particular flow"
+	print "4. Add/modify a flow to the network"
+	print "5. Delete a flow from the network"
+	print "6. Toggle a flow in the network"
+	print "\n"
+	choice = input("Enter your choice")
+	if(choice == 1):
+		flow_list(controlip)
+	if(choice == 2):
+		fnode1 = raw_input("Enter the node id:")
+		fnodetype= raw_input("Enter the node type:")
+		node_flow_list(controlip,fnode1,fnodetype)
+	if(choice == 3):
+		fnode1 = raw_input("Enter the node id:")
+		fnodetype= raw_input("Enter the node type:")
+		fflow= raw_input("Enter the flowname:")
+		flow_display(controlip,fflow,fnode1,fnodetype)
+	if(choice == 5):
+		fnode1 = raw_input("Enter the node id:")
+		fnodetype= raw_input("Enter the node type:")
+		fflow= raw_input("Enter the flowname:")
+		flow_delete(controlip,fflow,fnode1,fnodetype)
+	if (choice == 4):
+		flow_put(controlip)
+	if (choice == 6):
+		fnode1 = raw_input("Enter the node id:")
+		fnodetype= raw_input("Enter the node type:")
+		fflow= raw_input("Enter the flowname:")
+		flow_toggle(controlip,fflow,fnode1,fnodetype)
+	choice1= raw_input("Do you want to continue? [y/n]:")
+	if(choice1 == 'n'):
+		break
+		
+
+	
+	

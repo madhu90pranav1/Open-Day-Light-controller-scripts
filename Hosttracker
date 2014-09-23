@@ -1,0 +1,88 @@
+#!/bin/usr/py
+
+import httplib2
+import json
+
+h= httplib2.Http(".cache")
+h.add_credentials('admin','admin')
+
+def host_display(controllerip,hostippaddress):
+	
+	URL1=
+	resp,content= h.request(URL1,"GET")
+	hdata= json.loads(content)
+	print 'Data Layer Address:', hdata['dataLayerAddress']
+	print 'Node Type:' , hdata['nodeType']
+	print 'Node Id:', hdata['nodeId']
+	print 'Node Connector Type:', hdata['nodeConnectorType']
+	print 'Node Connector Id:', hdata['nodeConnectorId']
+	print 'vlan:', hdata['vlan']
+	print 'Network Address', hdata['networkAddress']
+	return
+
+def host_add(controllerip,hostippaddress):
+	
+	datalayer_address= raw_input("Enter Data Layer Address:")
+	node_id= raw_input("Enter Node id:")
+	node_type= raw_input("Enter Node type:")
+	nodeConnector_Type= raw_input("Enter Node Connector Type:")
+	nodeConnector_Id= raw_input("Enter the Node Connector Id:")
+	vlan= raw_input("Enter the vlan id:")
+	network_address= raw_input("Enter the Network Address:")
+	#fdata['nwSrc']= raw_input("Enter the source network:")
+	#fdata['actions']= []
+	#flow_actions= raw_input("Enter the output port:")
+	hdata.update({"dataLayerAddress":datalayer_address})
+	hdata.update({"nodeType":node_type})
+	hdata.update({"nodeId":node_id})
+	hdata.update({"nodeConnectorType":nodeConnector_Type})
+	hdata.update({"nodeConnectorId":nodeConnector_Id})
+	hdata.update({"networkAddress":network_address})
+	hdata.update({"vlan":"vlan"})
+	
+	
+	
+	print json.dumps(hdata)
+	resp,content= h.request(uri=URL1,method='PUT',headers={'Content-Type':'application/json'},body=json.dumps(fdata))
+	
+	
+def host_delete(controllerip,hostippaddress):
+	#URL builder with hostippaddress
+	resp,content= h.request(URL1,"DELETE")
+	return
+	
+def hostlist_display(controllerip,type):
+	#URL builder with type=active/inactive
+	resp,content= h.request(URL,"GET")
+	hlist= json.loads(content)
+	hostlist= hlist['hostconfig']
+	numberofhost= len(hostlist)
+	for hostnumber in range(0,numberofhost) :
+		host_display(controllerip,hostlist[hostnumber]['networkAddress'])
+	return
+
+def host_tracker(controllerip):
+	print " The following functions are available with respect to hosts in the network:"
+	print "1. Display a particular static host details:"
+	print "2. Adding a static host to the network:"
+	print "3. Delete a particular host in the network:"
+	print "4. Display a list of active hosts in the network:"
+	print "5. Display a list of inactive hosts in the network:"
+	choice= raw_input("Enter your choice ")
+	
+	if(choice == '1'):
+		hostippaddress= raw_input(" Enter the network address of the host")
+		host_display(controllerip,hostippaddress)
+	if(choice == '2'):
+		hostippaddress= raw_input(" Enter the network address of the host")
+		host_add(controllerip,hostippaddress)
+	if(choice == '3'):
+		hostippaddress= raw_input(" Enter the network address of the host")
+		host_delete(controllerip,hostippaddress)
+	if(choice == '4'):
+		hostlist_display(controllerip,"active")
+	if(choice == '5'):
+		hostlist_display(controllerip,"inactive")
+	return
+
+
